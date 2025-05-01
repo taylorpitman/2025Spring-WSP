@@ -1,11 +1,11 @@
 /*  B"H
 */
 
-const data = require('../data/products.json')
+const data = require('../data/users.json')
 const { CustomError, statusCodes } = require('./errors')
 const { connect } = require('./supabase')
 
-const TABLE_NAME = 'products'
+const TABLE_NAME = 'users'
 
 const BaseQuery = () => connect().from(TABLE_NAME)
     .select('*, product_reviews(average_rating:rating.avg())', { count: "estimated" })
@@ -28,7 +28,7 @@ async function getAll(limit = 30, offset = 0, sort = 'id', order = 'desc'){
 
 async function get(id){
     const { data: item, error } = await connect().from(TABLE_NAME)
-    .select('*, reviews:product_reviews(*, reviewer:users(*))').eq('id', id)
+    .select('*, product_reviews(*)').eq('id', id)
     if (!item.length) {
         throw new CustomError('Item not found', statusCodes.NOT_FOUND)
     }
@@ -40,7 +40,7 @@ async function get(id){
 
 async function search(query, limit = 30, offset = 0, sort = 'id', order = 'desc'){
     const { data: items, error, count } = await BaseQuery()
-    .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+    .or(`firstName.ilike.%${query}%,lastName.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%`)
     .order(sort, { ascending: order === 'asc' })
     .range(offset, offset + limit -1)
     if (error) {
@@ -87,28 +87,12 @@ async function remove(id){
 }
 
 async function seed(){
-
-    const { data: user } = await connect().from('users').select('*')
-
     for (const item of data.items) {
 
         const insert = mapToDB(item)
         const { data: newItem, error } = await connect().from(TABLE_NAME).insert(insert).select('*')
         if (error) {
             throw error
-        }
-
-        for (const review of item.reviews) {
-            const randomIndex = Math.floor(Math.random() * user.length)
-            const randomUser = user[randomIndex]
-
-            const reviewInsert = mapReviewToDB(review, newItem[0].id, randomUser)
-
-            const { data: newReview, error } = await connect().from('product_reviews').insert(reviewInsert).select('*')
-
-            if (error) {
-                throw error
-            }
         }
 
     }
@@ -118,36 +102,16 @@ async function seed(){
 function mapToDB(item) {
     return {
         //id: item.id,
-        title: item.title,
-        description: item.description,
-        category: item.category,
-        price: item.price,
-        rating: item.rating,
-        stock: item.stock,
-        tags: item.tags,
-        brand: item.brand,
-        sku: item.sku,
-        weight: item.weight,
-        dimensions: item.dimensions,
-        shipping_information: item.shippingInformation,
-        availability_status: item.availabilityStatus,
-        return_policy: item.returnPolicy,
-        minimum_order_quantity: item.minimumOrderQuantity,
-        thumbnail: item.thumbnail,
-        images: item.images,
-    }
-}
-
-function mapReviewToDB(review, product_id, user) {
-    return {
-        //id: review.id,
-        product_id: product_id,
-        rating: review.rating,
-        comment: review.comment,
-        reviewer_email: user.email,
-        reviewer_name: user.name,
-        date: review.date,
-        reviewer_id: user.id,
+        firstName: item.firstName,
+        lastName: item.lastName,
+        email: item.email,
+        phone: item.phone,
+        age: item.age,
+        gender: item.gender,
+        birthDate: item.birthDate,
+        image: item.image,
+        university: item.university,
+        role: item.role,
     }
 }
 

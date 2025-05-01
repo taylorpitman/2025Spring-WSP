@@ -2,25 +2,71 @@
 */
 // Load the http module to create an http server.
 const express = require('express')
-const productsController = require('./controllers/products')
+const productsController = require('./controllers/products');
+const usersController = require('./controllers/users');
+const reviewsController = require('./controllers/reviews');
+require('dotenv').config()
 
-const PORT = 8000
+const PORT = process.env.PORT ?? 8000
 
 const app = express();
 
+// Middleware
+// CORS
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*')
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200)
+    }
+    next()
+  })
+    app.use(express.json())
+
+
+//Controllers
 app
-  .get('/', (req, res) => {
+  .get('/hello', (req, res) => {
     res.send('Hello New Paltz, NY!!!')
   })
   .use('/api/v1/products', productsController)
+  .use('/api/v1/users', usersController)
+  .use('/api/v1/reviews', reviewsController)
+  
+  .use('/', express.static('dist')) 
+
+
+//error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err)
+  const status = err.status || 500
+
+  const error = {
+    status,
+    message: err.message || 'Internal Server Error',
+  }
+  res.status(status).send(error)
+ })
 
 // Listen on port 8000, IP defaults to
 //
+
+
 app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}/`)
+    console.log(`
+      Welcome to the best class at New Paltz - ${process.env.BEST_CLASS}
+      Server running at http://localhost:${PORT}/
+    `)
 });
 
-
+/*
+  Asynchronous patterns in Node.js
+  1. Callbacks
+  2. Pipeline
+  3. Promises
+  4. Async/Await
+*/
 
 console.log('Hello World!')
 

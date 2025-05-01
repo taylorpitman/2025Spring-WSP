@@ -1,11 +1,23 @@
 <script setup lang="ts">
 import { addToCart } from '@/models/cart';
+import { type DataListEnvelope } from '@/models/dataEnvelopes';
 import { getAll, type Product } from '@/models/products';
+import { ref } from 'vue';
 
-const products = getAll()
+const products = ref({} as DataListEnvelope<Product>)
+
+getAll()
+    .then((response) => {
+        products.value = response
+    })
 
 function doAddToCart(product: Product) {
     addToCart(product)
+}
+interface Ratable {
+    product_reviews: {
+        average_rating: number;
+    }
 }
 </script>
 
@@ -20,17 +32,26 @@ function doAddToCart(product: Product) {
                     </RouterLink>
                 </div>
                 <div class="product-info">
+
+                    <b-rate :model-value="(p as any)?.product_reviews[0]?.average_rating" disabled
+                            show-score></b-rate>
+
                     <h2>{{ p.title }}</h2>
                     <p>{{ p.description }}</p>
                     <span class="price">${{ p.price }}</span>
                     <button class="button is-success" @click="doAddToCart(p)">Add to cart</button>
                 </div>
+
             </div>
         </div>
     </div>
 </template>
 
 <style scoped>
+.rate {
+    float: right;
+}
+
 .shelf {
     display: flex;
     flex-wrap: wrap;
@@ -38,6 +59,9 @@ function doAddToCart(product: Product) {
 }
 
 .shelf .product {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     width: 30%;
     margin: 1em;
     padding: 1em;
